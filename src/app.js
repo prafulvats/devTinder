@@ -1,6 +1,8 @@
 const express = require("express");
 const { connectDb } = require("./config/database")
 const { User } = require("./models/user")
+const { validateSignUp } = require("./utils/helper")
+const bcrypt = require("bcrypt");
 const app = express();
 
 //For converting JSON into JS object
@@ -21,21 +23,44 @@ app.post('/user', (req, res) => {
     res.send("Data saved successfully");
 });
 
-// app.delete('/user', (req, res) => {
-//     res.send("Data deleted successfully");
-// });
 
+//SignUp User
 app.post('/signUp', async (req, res) => {
     // Creating instance of model
     // const users = new User(req.body); 
     try {
-        await User(req.body).save();
-        res.send("Data saved successfully")
+        validateSignUp(req);
+        const { firstName, lastName, email, password } = req.body;
+        //Hashing a password (Encryption using bcrypt library)
+        const passwordhash = await bcrypt.hash(password, 10);
+        await User({firstName, lastName, email, password: passwordhash}).save();
+        res.send("Data saved successfully");
     } catch(err) {
-        res.send("Some error is there while saving")
+        console.log(err.message, "message")
+        res.status(400).send(err.message);
     }
 })
 
+//SignIn User
+app.post('/signIn', async (req, res) => {
+    try {
+        const user = await User.findOne({email: req.body.email});
+        if(!user) {
+            throw new Error("Invalid Credentials");
+        } else {
+            const validPassword = await bcrypt.compare(req.body.password, user.password);
+            if(validPassword) {
+                res.send('Login Successfull');
+            } else {
+                throw new Error("Invalid Credentials");
+            }
+        }
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+})
+
+//Get all users
 app.get('/feed', async (req, res) => {
     try {
       const usersList = await User.find({});
@@ -64,10 +89,10 @@ app.patch("/user", async (req, res) => {
     const userId  = req.body.userId;
     const data = req.body;
     try {
-        await User.findByIdAndUpdate(userId, data)
+        await User.findByIdAndUpdate(userId, data, {runValidators: true})
         res.send("User updated successfully");
     } catch (error) {
-        res.send("Some issue with Updation");
+        res.send(error);
     }
 })
 
