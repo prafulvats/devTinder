@@ -2,11 +2,15 @@ const express = require("express");
 const { connectDb } = require("./config/database")
 const { User } = require("./models/user")
 const { validateSignUp } = require("./utils/helper")
+const { userAuth } = require("./middleware/auth")
 const bcrypt = require("bcrypt");
+const cookie = require("cookie-parser");
+var jwt = require('jsonwebtoken');
 const app = express();
 
 //For converting JSON into JS object
 app.use(express.json());
+app.use(cookie());
 
 // This will only handle get call for /user
 app.get("/user", (req, res) => {
@@ -50,11 +54,37 @@ app.post('/signIn', async (req, res) => {
         } else {
             const validPassword = await bcrypt.compare(req.body.password, user.password);
             if(validPassword) {
+                //Create a JWT token
+                const token = await jwt.sign({ _id: user._id}, "Nike@12345", { expiresIn: '1h' }) // Hiding the userId in token , Secret Key at server only. Add Token Expiry
+                //Setting token with Expiry
+                res.cookie("token", token, { expires: new Date(Date.now() + 900000), httpOnly: true });
                 res.send('Login Successfull');
             } else {
                 throw new Error("Invalid Credentials");
             }
         }
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+})
+
+//Get profile
+
+app.get("/profile", userAuth, async (req, res) => {
+    try {
+        const user = req.profileData;
+        res.send(user);
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+})
+
+// Send Connection Request
+
+app.post("/sendConnectionRequest", userAuth, (req, res) => {
+    try {
+        const user = req.profileData;
+        res.send(`${user.firstName} send connection request`);
     } catch (error) {
         res.status(400).send(error.message);
     }
