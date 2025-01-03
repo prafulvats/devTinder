@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const bcrypt = require("bcrypt");
+const jwt = require('jsonwebtoken');
 
 //Create Schema and Model
 //Schema level validation
@@ -51,6 +53,23 @@ const userSchema = mongoose.Schema({
 },{
     timestamps: true, // This will add the createdAt and updatedAt for the inserted data
 })
+
+//Schema Mongo Methods - This is for refactoring code we can write here instead of writing these in Request handler.
+//We can create functions which are specific to the user like create JWT token, password compare.
+//Add the methods which are related to user only. 
+
+userSchema.methods.getJWT = async function () {
+    const user = this; // It will pick the instance of user model
+    const token = await jwt.sign({ _id: user._id}, "Nike@12345", { expiresIn: '1h' });
+    return token;
+}
+
+userSchema.methods.validatePassword = async function (passwordInputByUser) {
+    const user = this;
+    const passwordhash = user.password;
+    const isPasswordValid = await bcrypt.compare(passwordInputByUser, passwordhash);
+    return isPasswordValid;
+}
 
 const User = mongoose.model("User", userSchema);
 

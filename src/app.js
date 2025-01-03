@@ -5,7 +5,7 @@ const { validateSignUp } = require("./utils/helper")
 const { userAuth } = require("./middleware/auth")
 const bcrypt = require("bcrypt");
 const cookie = require("cookie-parser");
-var jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const app = express();
 
 //For converting JSON into JS object
@@ -48,14 +48,17 @@ app.post('/signUp', async (req, res) => {
 //SignIn User
 app.post('/signIn', async (req, res) => {
     try {
-        const user = await User.findOne({email: req.body.email});
+        const { email, password } = req.body;
+        const user = await User.findOne({email: email});
         if(!user) {
             throw new Error("Invalid Credentials");
         } else {
-            const validPassword = await bcrypt.compare(req.body.password, user.password);
+            // const validPassword = await bcrypt.compare(password, user.password);
+            const validPassword = await user.validatePassword(password);
             if(validPassword) {
                 //Create a JWT token
-                const token = await jwt.sign({ _id: user._id}, "Nike@12345", { expiresIn: '1h' }) // Hiding the userId in token , Secret Key at server only. Add Token Expiry
+                // const token = await jwt.sign({ _id: user._id}, "Nike@12345", { expiresIn: '1h' }) // Hiding the userId in token , Secret Key at server only. Add Token Expiry
+                const token = await user.getJWT();
                 //Setting token with Expiry
                 res.cookie("token", token, { expires: new Date(Date.now() + 900000), httpOnly: true });
                 res.send('Login Successfull');
@@ -69,7 +72,6 @@ app.post('/signIn', async (req, res) => {
 })
 
 //Get profile
-
 app.get("/profile", userAuth, async (req, res) => {
     try {
         const user = req.profileData;
@@ -80,7 +82,6 @@ app.get("/profile", userAuth, async (req, res) => {
 })
 
 // Send Connection Request
-
 app.post("/sendConnectionRequest", userAuth, (req, res) => {
     try {
         const user = req.profileData;
