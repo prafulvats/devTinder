@@ -21,7 +21,6 @@ authRouter.post('/signUp', async (req, res) => {
         res.status(400).send(err.message);
     }
 })
-
 //SignIn User
 authRouter.post('/signIn', async (req, res) => {
     try {
@@ -46,6 +45,12 @@ authRouter.post('/signIn', async (req, res) => {
     } catch (error) {
         res.status(400).send(error.message);
     }
+})
+
+authRouter.post('/logout', async (req, res) =>{
+    res.cookie("token", null, {
+        expires: new Date(Date.now())
+    }).send("Logout Successfull")
 })
 
 module.exports = { authRouter };
