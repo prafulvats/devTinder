@@ -60,7 +60,7 @@ app.use("/", (req, res) => {
 //Connect with the database first then start the app/server
 connectDb().then(()=>{
     console.log("database connection establised...");
-    app.listen(7778, () => {
+    app.listen(7777, () => {
         console.log('Server running!')
     });
 }).catch(err=> {

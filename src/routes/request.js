@@ -40,12 +40,22 @@ requestRouter.post("/request/send/:status/:userId", userAuth, async (req, res) =
         })
         const data = await connectionRequest.save();
         res.json({
-            message: `${req.profileData.firstName} ${status} ${userExist.firstName}`,
+            message: `${user.firstName} ${status} ${userExist.firstName}`,
             data
         }) 
         
     } catch (error) {
         res.status(400).send(error.message);
+    }
+})
+
+requestRouter.post("/request/review/:status/:userId", userAuth, async (req, res) => {
+    try {
+        const user = req.profileData;
+        const fromUserId = req.profileData._id;
+        const { userId, status } = req.params;
+    } catch (error) {
+        
     }
 })
 
